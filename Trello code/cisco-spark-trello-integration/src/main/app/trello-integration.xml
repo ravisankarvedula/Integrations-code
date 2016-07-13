@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+    <http:request-config name="HTTP_Integrations_Runtime_Request_Configuration" protocol="HTTPS" host="${integrations.runtime.host}" port="${integrations.runtime.port}" basePath="${integrations.runtime.path}" doc:name="HTTP Request Configuration"/>
+
+	<flow name="postFormatMessageFlow">
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-variable variableName="trigResponse"><![CDATA[%dw 1.0
+%output application/java
+---
+payload
+]]></dw:set-variable>
+        </dw:transform-message>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.trigResponse.action.type =='createList']">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])created List &quot;#[flowVars.trigResponse.action.data.list.name]&quot; in board #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" level="INFO" doc:name="Logger"/>
+                <set-variable variableName="PostMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) created List &quot;#[flowVars.trigResponse.action.data.list.name] in board #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" doc:name="PostMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='createCard']">
+                <logger level="INFO" doc:name="Logger" message="#[flowVars.trigResponse.action.memberCreator.fullname](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) created card &quot;#[flowVars.trigResponse.action.data.card.name]&quot;(https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])]"/>
+                <set-variable variableName="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullname](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) created card &quot;#[flowVars.trigResponse.action.data.card.name]&quot;(https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])]" doc:name="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='updateCard' &amp;&amp; flowVars.trigResponse.action.data.old.name != null]">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) updated name of  card#[flowVars.trigResponse.action.data.old.name] to #[flowVars.trigResponse.action.data.card.name]" level="INFO" doc:name="Logger"/>
+                <set-variable variableName="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName] updated name of  card#[flowVars.trigResponse.action.data.old.name] to #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" doc:name="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='addMemberToCard']">
+                <logger message="#[flowVars.trigResponse.action.member.fullName](https://trello.com/#[flowVars.trigResponse.action.member.username]) was added to #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name]) by #[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])" level="INFO" doc:name="Logger"/>
+                <set-variable variableName="postMessage" value="#[flowVars.trigResponse.action.member.fullName](https://trello.com/#[flowVars.trigResponse.action.member.username]) was added to #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name]) by #[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])" doc:name="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='addChecklistToCard']">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) added checklist #[flowVars.trigResponse.action.data.checklist.name] to #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" level="INFO" doc:name="Logger"/>
+                <set-variable variableName="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) added checklist #[flowVars.trigResponse.action.data.checklist.name] to #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" doc:name="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='updateCard' &amp;&amp; flowvars.trigResponse.action.data.card.due != null]">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) updated due date to #[flowVars.trigResponse.action.data.card.due] for card #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) updated due date to #[flowVars.trigResponse.action.data.card.due] for card #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" variableName="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='addLabelToCard']">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) changed Label to &quot;#[flowVars.trigResponse.action.data.label.name]&quot; for card  #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) changed Label to &quot;#[flowVars.trigResponse.action.data.label.name]&quot; for card  #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" variableName="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='updateCard' &amp;&amp; flowVars.trigResponse.action.data.card.desc != null]">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) added description &quot;#[flowVars.trigResponse.action.data.card.desc]&quot; to card #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) added description &quot;#[flowVars.trigResponse.action.data.card.desc]&quot; to card #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" variableName="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='commentCard']">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) posted comment &quot;#[flowVars.trigResponseaction.data.text]&quot; to card &quot;#[flowVars.trigResponse.action.data.card.name]&quot;(https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name]) in list #[flowVars.trigResponse.action.data.list.name]" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postmessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) posted comment &quot;#[flowVars.trigResponseaction.data.text]&quot; to card &quot;#[flowVars.trigResponse.action.data.card.name]&quot;(https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name]) in list #[flowVars.trigResponse.action.data.list.name]" variableName="postmessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='addAttachmentToCard']">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])  added attachment &quot;#[flowVars.trigResponse.action.data.attachment.name]&quot; to card #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="Variable" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])  added attachment &quot;#[flowVars.trigResponse.action.data.attachment.name]&quot; to card #[flowVars.trigResponse.action.data.card.name](https://trello.com/c/#[flowVars.trigResponse.action.data.card.shortLink]/#[flowVars.trigResponse.action.data.card.idShort]-#[flowVars.trigResponse.action.data.card.name])" variableName="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='updateBoard' &amp;&amp; flowVars.trigResponse.action.data.board.name != null]">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) updated board name of &quot;#[flowVars.trigResponse.action.data.old.name]&quot; to &quot;#[flowVars.trigResponse.action.data.board.name]&quot;(https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) updated board name of &quot;#[flowVars.trigResponse.action.data.old.name]&quot; to &quot;#[flowVars.trigResponse.action.data.board.name]&quot;(https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" variableName="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='updateList' &amp;&amp; flowVars.trigResponse.action.data.list.closed != null]">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])  archived list &quot;#[flowVars.trigResponse.action.data.list.name]&quot; in board #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])  archived list &quot;#[flowVars.trigResponse.action.data.list.name]&quot; in board #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" variableName="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='addMemberToBoard']">
+                <logger message="#[flowVars.trigResponse.action.member.fullName](https://trello.com/#[flowVars.trigResponse.action.member.username]) was added to board #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name]) by #[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postMessage" value="#[flowVars.trigResponse.action.member.fullName](https://trello.com/#[flowVars.trigResponse.action.member.username]) was added to board #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name]) by #[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username])" variableName="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='updateList' &amp;&amp; flowVars.trigResponse.action.data.list.name != null]">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) changed list name of &quot;#[flowVars.trigResponse.action.data.old]&quot; to &quot;#[flowVars.trigResponse.action.data.list.name]&quot; in board #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postMessage" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) changed list name of &quot;#[flowVars.trigResponse.action.data.old]&quot; to &quot;#[flowVars.trigResponse.action.data.list.name]&quot; in board #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" variableName="postMessage"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='updateList' &amp;&amp; flowVars.trigResponse.action.data.list.pos != null]">
+                <logger message="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) moved list &quot;#[flowVars.trigResponse.action.data.list.name]&quot; to #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" level="INFO" doc:name="Logger"/>
+                <set-variable doc:name="postMessge" value="#[flowVars.trigResponse.action.memberCreator.fullName](https://trello.com/#[flowVars.trigResponse.action.memberCreator.username]) moved list &quot;#[flowVars.trigResponse.action.data.list.name]&quot; to #[flowVars.trigResponse.action.data.board.name](https://trello.com/b/#[flowVars.trigResponse.action.data.board.shortLink]/#[flowVars.trigResponse.action.data.board.name])" variableName="postMessge"/>
+            </when>
+            <when expression="#[flowVars.trigResponse.action.type =='createCard']">
+                <logger level="INFO" doc:name="Logger"/>
+            </when>
+        </choice>
+        <dw:transform-message doc:name="Build Post Format Message Response">
+            <dw:set-payload resource="classpath:dwScripts/buildPostFormatMessageResponse.dwl"/>
+        </dw:transform-message>
+    </flow>
+        
+    <flow name="postIntegrationSettingsFlow">
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload resource="classpath:dwScripts/buildGetIntegrationSettingsResponse.dwl"><![CDATA[%dw 1.0
+%output application/java
+---
+payload
+]]></dw:set-payload>
+        </dw:transform-message>
+        <set-variable variableName="userId" value="#[payload.userId]" doc:name="userId"/>
+        <set-variable variableName="integrationId" value="#[payload.integrationId]" doc:name="integrationId"/>
+        <logger message="hiiiiiiii#[flowVars.integrationId] &amp;&amp; #[flowVars.userId]" level="INFO" doc:name="Logger"/>
+        <flow-ref name="getTrelloTokenFlow" doc:name="getTrelloTokenFlow"/>
+        <logger message="After fr #[flowVars.AT]" level="INFO" doc:name="Logger"/>
+        
+        <enricher target="#[flowVars.boardsResponse]" doc:name="Message Enricher">
+            <flow-ref name="getTrelloBoardsFlow" doc:name="getTrelloBoardsFlow"/>
+        </enricher>
+        
+        <dw:transform-message doc:name="Build Get Integration Settings Response">
+            <dw:set-payload resource="classpath:dwScripts/buildGetIntegrationSettingsResponse.dwl"/>
+        </dw:transform-message>
+    </flow>
+    <flow name="getTrelloTokenFlow">
+        <http:request config-ref="HTTP_Integrations_Runtime_Request_Configuration" path="/integrations/{integrationId}/appTokens" method="GET" doc:name="HTTP" host="${integrations.runtime.host}" port="${integrations.runtime.port}">
+            <http:request-builder>
+                <http:query-param paramName="userId" value="#[flowVars.userId]"/>
+                <http:uri-param paramName="integrationId" value="#[flowVars.integrationId]"/>
+            </http:request-builder>
+            <http:failure-status-code-validator values="500..599"/>
+        </http:request>
+        <object-to-string-transformer returnClass="java.lang.String" doc:name="Object to String"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <set-variable variableName="AT" value="#[json:[0]/accessToken]" doc:name="Variable"/>
+        <logger message="After RT = #[flowVars.AT]" level="INFO" doc:name="Logger"/>
+    </flow>
+    <flow name="postListSettingsFlow">
+        <enricher target="#[flowVars.listSettings]" doc:name="Message Enricher">
+            <flow-ref name="getListsUnderBoardFlow" doc:name="getListsUnderBoardFlow"/>
+        </enricher>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	"listResponse":flowVars.listSettings
+}
+]]></dw:set-payload>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="setupIntegrationFlow">
+        <enricher target="#[flowVars.webhookResponse]" doc:name="Message Enricher">
+            <flow-ref name="postTrelloHookFlow" doc:name="postTrelloHookFlow"/>
+        </enricher>
+        <dw:transform-message doc:name="Build Setup Integration Response">
+            <dw:set-payload resource="classpath:dwScripts/buildSetupIntegrationResponse.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="tearDownIntegrationFlow">
+    	<dw:transform-message doc:name="Transform Payload to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+        <flow-ref name="deleteTrelloHookFlow" doc:name="deleteTrelloHookFlow"/>
+        <dw:transform-message doc:name="Build Tear Down Integration Response">
+            <dw:set-payload resource="classpath:dwScripts/buildTearDownIntegrationResponse.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="healthCheckFlow">
+        <dw:transform-message doc:name="Build Health Check Response">
+            <dw:set-payload resource="classpath:dwScripts/buildHealthCheckResponse.dwl"/>
+        </dw:transform-message>
+    </flow>
+</mule>

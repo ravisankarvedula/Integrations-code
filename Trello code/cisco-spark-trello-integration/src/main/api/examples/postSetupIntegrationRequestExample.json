@@ -1,0 +1,17 @@
+{
+	"room_id": "Y2lzY29zcGFyazovL3VzL1JPT00vNzYzNGY5NjAtMWU3Yy0xMWU2LWI0MTktMDEzYTg5NjQ1ODFj",
+	"integration_id": "2",
+	"access_token": "9ce63f7766ab03f92575db5c09007194ef8c790b9a3d725ea79cfef8e3fa5820",
+	"spark_token": "OTdiMTBlYjQtODdmYS00MGJiLTkzYzMtNjAxZDdmNGI3NGIzZDUzMjU3Y2ItZTZi",
+	"user_id": "Y2lzY29zcGFyazovL3VzL1BFT1BMRS8xYjY4ZmI1NS1kMjAxLTQ4ZmEtOTU3ZC0yZTQ3ODIwNTFmYmI",
+	"config": {
+		"room_name": "Practice",
+		"board_id": "5773d192223f67a752a8f3a9",
+		"board_name": "Harish",
+		"user_name": "Harish",
+		"notifications": {
+			"boardandlistnotifications": "list-created",
+			"cardnotifications": "card-created"
+		}
+	}
+}

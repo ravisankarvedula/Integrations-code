@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:Trello="http://www.mulesoft.org/schema/mule/Trello" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/Trello http://www.mulesoft.org/schema/mule/Trello/current/mule-Trello.xsd">
+  	
+  
+    <Trello:config name="Trello__Configuration" apiKey="9338edc094283fd8e41a086bad98aaf9" apiToken="0258c4b0087dab8e1197198e58890090eda3b85be5a3baa1038de4bff114037a" doc:name="Trello: Configuration"/>
+    <http:listener-config name="HTTP_Listener_Configuration" host="192.168.1.190" port="8081" doc:name="HTTP Listener Configuration"/>
+    
+	<flow name="getTrelloBoardsFlow">
+        <logger message="In bflow#[flowVars.AT]" level="INFO" doc:name="Logger"/>
+        <Trello:get-all-boards config-ref="Trello__Configuration" token="#[flowVars.AT]" doc:name="Trello"/>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    <flow name="getListsUnderBoardFlow">
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-variable variableName="input"><![CDATA[%dw 1.0
+%output application/java
+---
+payload
+]]></dw:set-variable>
+        </dw:transform-message>
+        <Trello:get-all-lists-under-board config-ref="Trello__Configuration" boardId="#[flowVars.input.boardId]" token="#[flowVars.input.accessToken]" doc:name="Trello"/>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload
+]]></dw:set-payload>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="postTrelloHookFlow">
+        <dw:transform-message doc:name="Build Post itbuchet Hook Request">
+            <dw:set-variable variableName="input"><![CDATA[%dw 1.0
+%output application/java
+---
+payload
+]]></dw:set-variable>
+        </dw:transform-message>
+        <set-variable variableName="UUID" value="#[java.util.UUID.randomUUID().toString()]" doc:name="UUID"/>
+        <set-variable variableName="url" value="https://www.mail.google.com" doc:name="URL"/>
+        <logger message="#[flowVars.input.config.boardId] &amp;&amp; #[flowVars.input.accessToken]" level="INFO" doc:name="Logger"/>
+        <Trello:post-webhook config-ref="Trello__Configuration" token="#[flowVars.input.accessToken]" doc:name="Trello">
+            <Trello:webhooks-post-req description="webhook" callbackURL="#[flowVars.url]" idModel="#[flowVars.input.config.boardId] "/>
+        </Trello:post-webhook>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="putTrelloHookFlow">
+        <dw:transform-message doc:name="Build Put Bitbuchet Hook Request">
+            <dw:set-payload resource="classpath:dwScripts/buildPutTrelloHookRequest.dwl"/>
+        </dw:transform-message>
+        <Trello:update-webhook config-ref="Trello__Configuration" token="cvsdjhbdkjvndlgmnflhnhgvbdgf121hfbjfnldbvjhfv" doc:name="Trello">
+            <Trello:webhook-put-req callbackURL="http:/www.mail.google.com" idModel="fsfjfdksndlsdkmbfhvfhvb"/>
+        </Trello:update-webhook>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="deleteTrelloHookFlow">
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-variable variableName="input"><![CDATA[%dw 1.0
+%output application/java
+---
+payload
+]]></dw:set-variable>
+        </dw:transform-message>
+        <Trello:delete-webhook-by-id config-ref="Trello__Configuration" idWebhook="#[flowVars.input.settings.webhookId]" token="#[flowVars.input.accessToken]" doc:name="Trello"/>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+</mule>
