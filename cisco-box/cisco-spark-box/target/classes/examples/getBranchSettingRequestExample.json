@@ -1,0 +1,17 @@
+{
+  "accessToken": "c840ed0dd99f167325ae8143fa29dfce0f4cefa5",
+  "expires": "2016-06-03T13:40:42.502-03:00",
+  "refreshToken": "2312313gsgsdgregsgegegw-gerweaewaxd32",
+  "refreshExpires": "2016-06-03T13:40:42.502-03:00",
+  "settings": {
+    "room": "aaabbc",
+    "type": "commits",
+    "reponame":"test_repo",
+    "username": "harisheidiko",
+    "password": "aaxcbbb",
+    "clientId": "aacer4ref3",
+    "clientSecret": "dfsfrgweggrger"
+  },
+  "messageFormat": "Trello: #{event} has happened",
+  "channelId": "fsdfsdfsff"
+}

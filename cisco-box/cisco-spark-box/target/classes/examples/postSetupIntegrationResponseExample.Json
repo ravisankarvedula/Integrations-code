@@ -1,0 +1,21 @@
+{
+	"type": "Repository",
+	"id": 9041917,
+	"name": "web",
+	"active": true,
+	"events": ["push", "pull_request"],
+	"config": {
+		"url": "http://183.82.99.100:8088/hooks/spark/github/ca227dbc-8c6b-4101-8021-80b4cef4f6e6",
+		"content_type": "json"
+	},
+	"updated_at": "2016-07-08T08:49:19Z",
+	"created_at": "2016-07-08T08:49:19Z",
+	"url": "https://api.github.com/repos/harisheidiko/test_repo/hooks/9041917",
+	"test_url": "https://api.github.com/repos/harisheidiko/test_repo/hooks/9041917/test",
+	"ping_url": "https://api.github.com/repos/harisheidiko/test_repo/hooks/9041917/pings",
+	"last_response": {
+		"code": null,
+		"status": "unused",
+		"message": null
+	}
+}
