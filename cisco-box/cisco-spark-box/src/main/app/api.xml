@@ -21,6 +21,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
         <apikit:console config-ref="api-config" doc:name="APIkit Console" />
     </flow>
     <flow name="post:/authDetails:api-config">
+        <logger message="$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" level="INFO" doc:name="Logger"/>
         <flow-ref name="postAuthDetailsFlow" doc:name="Post Auth Details Flow Reference" />
     </flow>
     <flow name="post:/settings:api-config">

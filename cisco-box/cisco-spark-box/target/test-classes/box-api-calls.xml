@@ -18,11 +18,11 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
  	<http:request-config name="HTTP_Operations_Request_Configuration" protocol="HTTPS" host="${box.api.operations.host}" port="${box.api.operations.port}"  doc:name="HTTP Request Configuration"/>
      
     <flow name="postboxTokenFlow">
-        <logger message="#[message.payloadAs(java.lang.String)] $$$$$$$$$" level="INFO" doc:name="Logger"/>
-        <logger message="*************** ${box.integration.client.id} ${box.integration.client.secret} #[payload.authSettings.code]  ${box.api.access.token.host}  ${box.api.access.token.port}" level="INFO" doc:name="Logger"/>
-        <set-variable variableName="clientid" value="${box.integration.client.id}" doc:name="Client Id"/>
-        <set-variable variableName="clientsecret" value="${box.integration.client.secret}" doc:name="Client Secret"/>
-        <set-variable variableName="code" value="#[payload.authSettings.code]" doc:name="Code"/>
+        <logger message="#[message.payloadAs(java.lang.String)]" level="INFO" doc:name="Logger"/>
+        <logger message="${box.integration.client.id} ${box.integration.client.secret} #[payload.authSettings.code]  ${box.api.access.token.host}  ${box.api.access.token.port}" level="INFO" doc:name="Logger"/>
+        <set-variable variableName="clientid" value="${box.integration.client.id}" doc:name="Variable"/>
+        <set-variable variableName="clientsecret" value="${box.integration.client.secret}" doc:name="Variable"/>
+        <set-variable variableName="code" value="#[payload.authSettings.code]" doc:name="Variable"/>
         <logger message="#[{'client_id':flowVars.clientid,'client_secret':flowVars.clientsecret,'code':flowVars.code}]" level="INFO" doc:name="Logger"/>
         <set-payload value="#[{'client_id':flowVars.clientid,'client_secret':flowVars.clientsecret,'code':flowVars.code}]" doc:name="Set Payload"/>
         

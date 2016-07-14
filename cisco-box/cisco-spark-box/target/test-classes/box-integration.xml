@@ -14,7 +14,6 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
        <dw:transform-message doc:name="Transform Payload to Java">
             <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
         </dw:transform-message>
-        <logger message="******************************* sdscsa ******************" level="INFO" doc:name="Logger"/>
         <enricher target="#[flowVars.postTokenResponse]" doc:name="Message Enricher">
             <flow-ref name="postboxTokenFlow" doc:name="Post box Token Flow"/>
         </enricher>
