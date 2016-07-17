@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+  	
+  	<http:request-config name="HTTP_Access_Token_Request_Configuration" protocol="HTTPS" host="${box.api.access.token.host}" port="${box.api.access.token.port}"  doc:name="HTTP Request Configuration"/>
+  	
+ 	<http:request-config name="HTTP_Operations_Request_Configuration" protocol="HTTPS" host="${box.api.operations.host}" port="${box.api.operations.port}" basePath="${box.api.operations.base.path}" doc:name="HTTP Request Configuration"/>
+    
+    <validation:config name="Validation_Configuration" doc:name="Validation Configuration"/>
+     
+    <flow name="postboxTokenFlow">
+    	<dw:transform-message doc:name="Build Post box Token Request">
+            <dw:set-payload resource="classpath:dwScripts/buildPostboxTokenRequest.dwl"/>
+        </dw:transform-message>
+        
+        <http:request config-ref="HTTP_Access_Token_Request_Configuration" path="${box.api.access.token.path}" method="POST" doc:name="HTTP">
+        	<http:request-builder>
+                <http:header headerName="Content-Type" value="application/x-www-form-urlencoded"/>
+            </http:request-builder>
+            <http:failure-status-code-validator values="500..599"/>
+        </http:request>
+        
+        <flow-ref name="checkResponseStatusCodeFlow" doc:name="Check Response Status Code Flow Reference"/>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="getboxUserFlow">
+    	 <http:request config-ref="HTTP_Operations_Request_Configuration" path="/user" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:header headerName="Authorization" value="Bearer #[flowVars.token]"/>
+            </http:request-builder>
+            <http:failure-status-code-validator values="500..599"/>
+        </http:request>
+        
+        <flow-ref name="checkResponseStatusCodeFlow" doc:name="Check Response Status Code Flow Reference"/>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+	<flow name="getboxRepositoriesFlow">
+    	 <http:request config-ref="HTTP_Operations_Request_Configuration" path="/repositories/{user}" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user" value="#[flowVars.user]"/>
+                <http:header headerName="Authorization" value="Bearer #[flowVars.token]"/>
+            </http:request-builder>
+            <http:failure-status-code-validator values="500..599"/>
+        </http:request>
+        
+        <flow-ref name="checkResponseStatusCodeFlow" doc:name="Check Response Status Code Flow Reference"/>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="postboxHookFlow">
+        <dw:transform-message doc:name="Build Post Bitbuchet Hook Request">
+            <dw:set-payload resource="classpath:dwScripts/buildPostboxHookRequest.dwl"/>
+        </dw:transform-message>
+    	 <http:request config-ref="HTTP_Operations_Request_Configuration" path="/repositories/{user}/{repository}/hooks" method="POST" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user" value="#[flowVars.user]"/>
+                <http:uri-param paramName="repository" value="#[flowVars.repository]"/>
+                <http:header headerName="Authorization" value="Bearer #[flowVars.token]"/>
+            </http:request-builder>
+            <http:failure-status-code-validator values="500..599"/>
+        </http:request>
+        
+        <flow-ref name="checkResponseStatusCodeFlow" doc:name="Check Response Status Code Flow Reference"/>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="putboxHookFlow">
+        <dw:transform-message doc:name="Build Put Bitbuchet Hook Request">
+            <dw:set-payload resource="classpath:dwScripts/buildPutboxHookRequest.dwl"/>
+        </dw:transform-message>
+        
+    	<http:request config-ref="HTTP_Operations_Request_Configuration" path="/repositories/{user}/{repository}/hooks/{hookId}" method="PUT" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user" value="#[flowVars.user]"/>
+                <http:uri-param paramName="repository" value="#[flowVars.repository]"/>
+                <http:uri-param paramName="hookId" value="#[flowVars.hookId]"/>
+                <http:header headerName="Authorization" value="Bearer #[flowVars.token]"/>
+            </http:request-builder>
+            <http:failure-status-code-validator values="500..599"/>
+        </http:request>
+        
+        <flow-ref name="checkResponseStatusCodeFlow" doc:name="Check Response Status Code Flow Reference"/>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="deleteboxHookFlow">
+    	 <http:request config-ref="HTTP_Operations_Request_Configuration" path="/repositories/{user}/{repository}/hooks/{hookId}" method="DELETE" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user" value="#[flowVars.user]"/>
+                <http:uri-param paramName="repository" value="#[flowVars.repository]"/>
+                <http:uri-param paramName="hookId" value="#[flowVars.hookId]"/>
+                <http:header headerName="Authorization" value="Bearer #[flowVars.token]"/>
+            </http:request-builder>
+            <http:failure-status-code-validator values="500..599"/>
+        </http:request>
+        
+        <flow-ref name="checkResponseStatusCodeFlow" doc:name="Check Response Status Code Flow Reference"/>
+        
+        <dw:transform-message doc:name="Build Delete box Hook Response ">
+            <dw:set-payload resource="classpath:dwScripts/buildDeleteboxHookResponse.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    
+    <flow name="getboxHookFlow">
+    	 <http:request config-ref="HTTP_Operations_Request_Configuration" path="/repositories/{user}/{repository}/hooks/{hookId}" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user" value="#[flowVars.user]"/>
+                <http:uri-param paramName="repository" value="#[flowVars.repository]"/>
+                <http:uri-param paramName="hookId" value="#[flowVars.hookId]"/>
+                <http:header headerName="Authorization" value="Bearer #[flowVars.token]"/>
+            </http:request-builder>
+            <http:failure-status-code-validator values="500..599"/>
+        </http:request>
+        
+        <flow-ref name="checkResponseStatusCodeFlow" doc:name="Check Response Status Code Flow Reference"/>
+        
+        <dw:transform-message doc:name="Transform Response to Java">
+            <dw:set-payload resource="classpath:dwScripts/fromPayloadToJava.dwl"/>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="checkResponseStatusCodeFlow">
+        <validation:is-true config-ref="Validation_Configuration" expression="#[message.inboundProperties.'http.status' != 401 &amp;&amp; message.inboundProperties.'http.status' != 429]" doc:name="Validation"/>
+    </flow>
+</mule>

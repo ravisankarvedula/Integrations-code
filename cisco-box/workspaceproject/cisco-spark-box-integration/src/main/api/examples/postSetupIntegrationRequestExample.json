@@ -1,0 +1,13 @@
+{
+	"userId" : "123",
+	"integrationId" : 1,
+	"instanceId" : "sascdscdskwqhdiuqwhda7y8dyas",
+	"configJson": {
+		"roomName": "room123",
+    	"repositoryName": "myrepo3",
+    	"userName": "DavoCoder",
+    	"displayName": "New Web Hook",
+    	"active": true,
+        "notifications": ["pullrequest:fulfilled", "pullrequest:created", "issue:comment_created","issue:created", "repo:push"]
+  	}
+}
